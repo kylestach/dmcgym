@@ -56,7 +56,7 @@ class DMCGYM(gym.core.Env):
 
     metadata = {"render_modes": ["rgb_array"]}
 
-    def __init__(self, env: dm_env.Environment):
+    def __init__(self, env: dm_env.Environment, new_step_api: bool = False):
         self._env = env
 
         self.action_space = dmc_spec2gym_space(self._env.action_spec())
@@ -65,6 +65,7 @@ class DMCGYM(gym.core.Env):
             self._env.observation_spec())
 
         self.viewer = None
+        self.new_step_api = False
 
     def _get_viewer(self):
         if self.viewer is None:
@@ -91,17 +92,25 @@ class DMCGYM(gym.core.Env):
         obs = time_step.observation
 
         info = {}
-        truncated = False
-        if done and time_step.discount == 1.0:
-            truncated = True
-            info['TimeLimit.truncated'] = True
+        truncated = (done and time_step.discount == 1.0)
+        if truncated:
+            if self.new_step_api:
+                done = False
+            else:
+                info['TimeLimit.truncated'] = True
 
-        return dmc_obs2gym_obs(obs), reward, done, truncated, info
+        if self.new_step_api:
+            return dmc_obs2gym_obs(obs), reward, done, info
+        else:
+            return dmc_obs2gym_obs(obs), reward, done, truncated, info
 
     def reset(self):
         time_step = self._env.reset()
         obs = time_step.observation
-        return dmc_obs2gym_obs(obs), {}
+        if self.new_step_api:
+            return dmc_obs2gym_obs(obs), {}
+        else:
+            return dmc_obs2gym_obs(obs)
 
     def render(self,
                mode='rgb_array',
