@@ -65,7 +65,7 @@ class DMCGYM(gym.core.Env):
             self._env.observation_spec())
 
         self.viewer = None
-        self.new_step_api = False
+        self.new_step_api = new_step_api
 
     def _get_viewer(self):
         if self.viewer is None:
@@ -100,9 +100,9 @@ class DMCGYM(gym.core.Env):
                 info['TimeLimit.truncated'] = True
 
         if self.new_step_api:
-            return dmc_obs2gym_obs(obs), reward, done, info
-        else:
             return dmc_obs2gym_obs(obs), reward, done, truncated, info
+        else:
+            return dmc_obs2gym_obs(obs), reward, done, info
 
     def reset(self):
         time_step = self._env.reset()
